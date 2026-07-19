@@ -7,7 +7,6 @@ const SECRET = process.env.BRIDGE_SECRET || "abc123";
 let pendingCommand = null;
 let lastSeen = 0;
 
-// 蓝牙中继轮询（bridge.py来取命令）
 app.get("/toy-poll", (req, res) => {
   if (req.query.secret !== SECRET) return res.status(403).end();
   lastSeen = Date.now();
@@ -20,11 +19,9 @@ app.get("/toy-poll", (req, res) => {
   }
 });
 
-// MCP工具接口
 app.post("/mcp", (req, res) => {
   if (req.query.secret !== SECRET) return res.status(403).end();
   const { tool, params } = req.body;
-  
   if (tool === "toy_status") {
     const online = Date.now() - lastSeen < 5000;
     return res.json({ result: online ? "在线" : "离线" });
@@ -44,11 +41,15 @@ app.post("/mcp", (req, res) => {
   res.status(400).json({ error: "未知工具" });
 });
 
-// MCP描述（Claude.ai连接用）
 app.get("/mcp", (req, res) => {
   res.json({
     tools: [
       { name: "toy_status", description: "查询蓝牙中继是否在线", parameters: {} },
-      { name: "toy_set_speed", description: "设置强度 0-1", parameters: { speed: { type: "number" } } },
+      { name: "toy_set_speed", description: "设置强度0到1", parameters: { speed: { type: "number" } } },
       { name: "toy_set_pattern", description: "设置振动花样", parameters: { mode: { type: "number" }, level: { type: "number" } } },
-      { name: "toy_stop", description: "停止",
+      { name: "toy_stop", description: "停止", parameters: {} }
+    ]
+  });
+});
+
+app.listen(process.env.PORT || 3000, () => console.log("启动成功"));
